@@ -7,7 +7,7 @@ A one-command fix for the **STOVE ERROR Code:-80** popups when running **Epic Se
 ## Contents
 
 - [What Is This?](#what-is-this)
-- [Supported Systems](#supported-systems)
+- [Tested On](#tested-on)
 - [Before You Start](#before-you-start)
 - [How to Use It](#how-to-use-it)
 - [Check If It Worked](#check-if-it-worked)
@@ -35,17 +35,25 @@ This script installs the official Microsoft WebView2 Runtime inside the game's i
 
 ---
 
-## Supported Systems
+## Tested On
 
-| System | Steam Install Type | Works? |
+| System | Steam Install Type | Status |
 |---|---|---|
-| **Steam Deck (SteamOS)** | Built-in | ✅ Fully tested |
-| **Arch Linux / Manjaro / EndeavourOS** | Native or Flatpak | ✅ Fully tested |
-| **Ubuntu 22.04 / 24.04 LTS** | Native, Flatpak, or Snap | ✅ All three auto-detected |
-| **Linux Mint / Pop!_OS / Zorin OS** | Native or Flatpak | ✅ Works (Ubuntu base) |
-| **Fedora 39 / 40 / Bazzite** | Native or Flatpak | ✅ Tested |
-| **openSUSE Tumbleweed / Leap** | Native or Flatpak | ✅ Works |
-| **Debian Stable** | Native or Flatpak | ⚠️ May need `curl` installed first (see below) |
+| **Steam Deck (SteamOS)** | Native (built-in) | ✅ Confirmed working |
+| **Arch Linux** | Native | ✅ Confirmed working |
+| **CachyOS** | Native | ✅ Confirmed working |
+| **Ubuntu 22.04 LTS** | Native | ✅ Confirmed working |
+| **Manjaro / EndeavourOS** | Native or Flatpak | 🟡 Should work — not live tested |
+| **Ubuntu 24.04 LTS** | Native, Flatpak, or Snap | 🟡 Should work — not live tested |
+| **Linux Mint / Pop!_OS / Zorin OS** | Native or Flatpak | 🟡 Should work — not live tested |
+| **Fedora / Bazzite** | Native or Flatpak | 🟡 Should work — not live tested |
+| **openSUSE Tumbleweed / Leap** | Native or Flatpak | 🟡 Should work — not live tested |
+| **Debian** | Native or Flatpak | 🟡 Should work — may need `curl` installed first |
+
+**✅ Confirmed** = tested on a real machine and verified working.
+**🟡 Should work** = the script's path detection covers these setups, but nobody has reported back yet. If it works or doesn't work for you, feel free to open an issue or leave a comment — it helps improve accuracy here.
+
+> **Using Flatpak or Snap Steam?** Paths are auto-detected, but these haven't been tested on a live machine. If you run into issues, see [Troubleshooting](#troubleshooting).
 
 ---
 
@@ -268,6 +276,27 @@ If the check says something is missing, run the script again without `--check`. 
 
 ---
 
+### Script can't find Proton (custom Proton builds like cachy-proton)
+
+If you're on a distro that installs Proton through its own package manager (e.g. CachyOS with `cachy-proton`, Nobara with GE-Proton via dnf), the script may not detect it automatically. Point it directly with `--proton`:
+
+```bash
+./fix-epic7-webview2.sh --proton "/path/to/your/proton"
+```
+
+Not sure where your Proton binary is? Run this to find it:
+
+```bash
+find /usr ~/.local ~/.steam -name 'proton' 2>/dev/null | grep -v 'dist\|python'
+```
+
+Example for CachyOS with cachy-proton:
+```bash
+./fix-epic7-webview2.sh --proton "$HOME/.local/share/Steam/steamapps/common/Proton - Experimental/proton"
+```
+
+---
+
 ### "Verifying game files" brought the error back
 
 Steam can wipe the prefix folder when you verify game files or reinstall the game. If the error comes back, just run the script again. The WebView2 installer is cached in `~/.cache/epic7-fix/` so it won't need to download again.
@@ -285,8 +314,8 @@ No. Everything is contained inside the game's Proton prefix folder (`steamapps/c
 **I have multiple Steam library locations / a MicroSD card. Will the script find the game?**
 Yes. The script reads your Steam library configuration file (`libraryfolders.vdf`) to scan all registered library locations, including external drives and MicroSD cards on the Steam Deck.
 
-**I use GE-Proton. Will that work?**
-Yes. The script automatically detects GE-Proton and other custom Proton builds installed in `compatibilitytools.d`.
+**I use GE-Proton or a custom Proton build (cachy-proton, etc.). Will that work?**
+The script checks the standard `compatibilitytools.d` locations including system-wide paths used by package managers. If it still can't find your Proton, use `--proton` to point to it directly — see [Troubleshooting](#troubleshooting) for details.
 
 ---
 
