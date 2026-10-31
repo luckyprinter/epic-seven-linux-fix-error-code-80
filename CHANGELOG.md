@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 
 ---
 
+## v1.2.2 — Linux Mint Fix: GnuTLS Noise & False-Negative Log Check
+
+### Bug Fixes
+- **Fixed (misleading):** After a successful install, the final verification step would show `[ERROR] Log status: Error -80 still present` on some systems. This was a false negative — the STOVE SDK log only records results during an actual game session. After the fix is applied but before the game is relaunched, the log still reflects the pre-fix state. The `[ERROR]` label has been replaced with a `[WARN]` that clearly explains the log is expected to show old data until the game runs again. Thanks to a Linux Mint user for the report.
+- **Fixed (noise):** On some distros (including Linux Mint), Wine/Proton logs many `GnuTLS error: The request is invalid.` messages during the WebView2 installer run. These are non-fatal — the installer still succeeds. The script now filters these known-harmless Wine noise lines from installer output and warns the user upfront that such messages may appear and can be ignored.
+
+### Documentation
+- **Linux Mint** added to the Tested On table as ✅ Confirmed working (native Steam).
+
+---
+
 ## v1.2.1 — CachyOS Fix & Stdout/Stderr Bug Fix
 
 ### Bug Fixes

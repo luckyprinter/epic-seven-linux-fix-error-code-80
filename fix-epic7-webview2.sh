@@ -27,6 +27,7 @@
 # Tested on: Steam Deck (SteamOS) — native Steam
 #            Arch Linux — native Steam
 #            Ubuntu 22.04 — native Steam
+#            Linux Mint — native Steam
 #            CachyOS — native Steam (use --proton if cachy-proton isn't detected)
 #            Proton 7.0 through 10.0, GE-Proton
 #
@@ -37,7 +38,7 @@
 
 set -euo pipefail
 
-SCRIPT_VERSION="1.2.1"
+SCRIPT_VERSION="1.2.2"
 INSTALLER_URL="https://go.microsoft.com/fwlink/?linkid=2124701"
 INSTALLER_NAME="MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 DOWNLOAD_DIR="${HOME}/Downloads"
@@ -360,7 +361,10 @@ check_status() {
         warn "Windows Registry keys: Missing"
     fi
 
-    # Check the most recent STOVE SDK log for the definitive result
+    # Check the most recent STOVE SDK log for the definitive result.
+    # NOTE: This log is only written when the game runs. If you just installed
+    # the fix, the log will still reflect the pre-fix state — that is expected.
+    # The real confirmation is the registry + file checks above.
     local latest_log
     latest_log="$(find "$PFX/pfx/drive_c/users" -name "BaseSDK_*.log" 2>/dev/null | sort -V | tail -n 1 || true)"
     if [[ -n "$latest_log" ]]; then
@@ -369,7 +373,7 @@ check_status() {
         if grep -q "Success to initialize ViewUISDK" "$latest_log" 2>/dev/null; then
             success "Log status: ViewUISDK initialized successfully — no Error -80!"
         elif grep -q "WebView rumtime is not available" "$latest_log" 2>/dev/null; then
-            error "Log status: Error -80 still present (WebView2 runtime not found by STOVE)"
+            warn "Log status: Log still shows Error -80 — this is normal if you haven't relaunched the game yet. The log updates only after a fresh game session."
         else
             info "Log status: No WebView initialization recorded yet in the latest log"
         fi
@@ -593,17 +597,20 @@ INSTALLER="$(find_or_download_installer)"
 # 7. Run the Installer Inside the Proton Prefix
 # -----------------------------------------------------------------------------
 info "Installing WebView2 inside Proton prefix — this runs silently for ~60-90 seconds..."
+warn "You may see 'GnuTLS error' or 'fixme:' lines below — these are normal Wine noise on some distros and do not affect the install."
 
 export STEAM_COMPAT_CLIENT_INSTALL_PATH="$PRIMARY_STEAM"
 export STEAM_COMPAT_DATA_PATH="$PFX"
 
 set +e
 if [[ -n "$RUNTIME" ]]; then
-    "$RUNTIME" -- "$PROTON" run "$INSTALLER" /silent /install
+    "$RUNTIME" -- "$PROTON" run "$INSTALLER" /silent /install 2>&1 \
+        | grep -v -E "^(fixme:|err:ntdll|err:seh|GnuTLS error|gnutls_record_recv|Could not load|wine: .* cannot find|0009:|000b:|000c:|000e:|000f:)" >&2 || true
 else
-    "$PROTON" run "$INSTALLER" /silent /install
+    "$PROTON" run "$INSTALLER" /silent /install 2>&1 \
+        | grep -v -E "^(fixme:|err:ntdll|err:seh|GnuTLS error|gnutls_record_recv|Could not load|wine: .* cannot find|0009:|000b:|000c:|000e:|000f:)" >&2 || true
 fi
-INSTALL_EXIT=$?
+INSTALL_EXIT=${PIPESTATUS[0]}
 set -e
 
 info "Installer exited with code: $INSTALL_EXIT (a non-zero exit is normal here)"

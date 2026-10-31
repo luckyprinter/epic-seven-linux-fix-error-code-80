@@ -45,7 +45,8 @@ This script installs the official Microsoft WebView2 Runtime inside the game's i
 | **Ubuntu 22.04 LTS** | Native | ✅ Confirmed working |
 | **Manjaro / EndeavourOS** | Native or Flatpak | 🟡 Should work — not live tested |
 | **Ubuntu 24.04 LTS** | Native, Flatpak, or Snap | 🟡 Should work — not live tested |
-| **Linux Mint / Pop!_OS / Zorin OS** | Native or Flatpak | 🟡 Should work — not live tested |
+| **Linux Mint** | Native | ✅ Confirmed working |
+| **Pop!_OS / Zorin OS** | Native or Flatpak | 🟡 Should work — not live tested |
 | **Fedora / Bazzite** | Native or Flatpak | 🟡 Should work — not live tested |
 | **openSUSE Tumbleweed / Leap** | Native or Flatpak | 🟡 Should work — not live tested |
 | **Debian** | Native or Flatpak | 🟡 Should work — may need `curl` installed first |
