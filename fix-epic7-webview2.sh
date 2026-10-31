@@ -24,14 +24,20 @@
 #   9.  Fixes partial installs (EdgeCore fallback + registry registration).
 #   10. Verifies the result against registry and STOVE SDK logs.
 #
-# Tested on: SteamOS (Steam Deck), Arch Linux, Ubuntu 22.04/24.04
-#            (Native / Flatpak / Snap), Fedora 39/40, Bazzite,
-#            openSUSE Tumbleweed, Manjaro.
+# Tested on: Steam Deck (SteamOS) — native Steam
+#            Arch Linux — native Steam
+#            Ubuntu 22.04 — native Steam
+#            CachyOS — native Steam (use --proton if cachy-proton isn't detected)
+#            Proton 7.0 through 10.0, GE-Proton
+#
+#            Flatpak and Snap Steam: paths are auto-detected but not fully
+#            verified on a live machine. If you're on Flatpak/Snap and run
+#            into issues, use --prefix or --proton to point the script manually.
 # =============================================================================
 
 set -euo pipefail
 
-SCRIPT_VERSION="1.2.0"
+SCRIPT_VERSION="1.2.1"
 INSTALLER_URL="https://go.microsoft.com/fwlink/?linkid=2124701"
 INSTALLER_NAME="MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 DOWNLOAD_DIR="${HOME}/Downloads"
@@ -53,9 +59,14 @@ BLUE='\033[0;34m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-info()    { echo -e "${BLUE}[INFO]${NC}  $*"; }
-success() { echo -e "${GREEN}[OK]${NC}    $*"; }
-warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+# All diagnostic output goes to stderr so it never pollutes stdout.
+# This matters because several functions return values via stdout inside
+# command substitutions like INSTALLER="$(find_or_download_installer)".
+# If info/success/warn wrote to stdout, their text would be captured
+# into the variable instead of being printed to the terminal.
+info()    { echo -e "${BLUE}[INFO]${NC}  $*" >&2; }
+success() { echo -e "${GREEN}[OK]${NC}    $*" >&2; }
+warn()    { echo -e "${YELLOW}[WARN]${NC}  $*" >&2; }
 error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 die()     { error "$*"; exit 1; }
 
@@ -443,13 +454,37 @@ find_proton() {
         done
     done
 
-    # GE-Proton and other custom tools in compatibilitytools.d
+    # GE-Proton and other custom tools in user-level compatibilitytools.d
     for lib in "${STEAM_LIBRARIES[@]}"; do
         local compat="$lib/compatibilitytools.d"
         if [[ -d "$compat" ]]; then
             local ge_proton
             ge_proton="$(find "$compat" -maxdepth 2 -name "proton" 2>/dev/null | sort -V | tail -n 1)"
             [[ -n "$ge_proton" && -f "$ge_proton" ]] && { echo "$ge_proton"; return; }
+        fi
+    done
+
+    # ~/.steam/root/compatibilitytools.d — Steam's own symlink location,
+    # sometimes separate from the library paths above
+    local steam_root_compat="${HOME}/.steam/root/compatibilitytools.d"
+    if [[ -d "$steam_root_compat" ]]; then
+        local sr_proton
+        sr_proton="$(find "$steam_root_compat" -maxdepth 2 -name "proton" 2>/dev/null | sort -V | tail -n 1)"
+        [[ -n "$sr_proton" && -f "$sr_proton" ]] && { echo "$sr_proton"; return; }
+    fi
+
+    # System-wide compatibilitytools.d — used by distros that package custom
+    # Proton builds via their package manager (e.g. CachyOS cachy-proton,
+    # Nobara proton-ge-custom installed via dnf/pacman)
+    local sys_compat_dirs=(
+        "/usr/share/steam/compatibilitytools.d"
+        "/usr/lib/steam/compatibilitytools.d"
+    )
+    for compat in "${sys_compat_dirs[@]}"; do
+        if [[ -d "$compat" ]]; then
+            local sys_proton
+            sys_proton="$(find "$compat" -maxdepth 2 -name "proton" 2>/dev/null | sort -V | tail -n 1)"
+            [[ -n "$sys_proton" && -f "$sys_proton" ]] && { echo "$sys_proton"; return; }
         fi
     done
 
@@ -480,8 +515,17 @@ PROTON="$(find_proton || true)"
 RUNTIME="$(find_runtime || true)"
 
 [[ -n "$PROTON" && -f "$PROTON" ]] \
-    || die "Could not find a Proton installation.
-Please install Proton (or Proton Experimental) via Steam → Library → Tools."
+    || die "Could not find a Proton installation in any of the standard locations.
+
+If you use a custom Proton build (e.g. cachy-proton, GE-Proton installed
+via your package manager), point the script to it directly:
+
+  $0 --proton /path/to/proton
+
+To find the path, run:
+  find /usr ~/.local ~/.steam -name 'proton' 2>/dev/null | grep -v 'dist\|python'
+
+Then install Proton via Steam → Library → Tools if none are found."
 
 info "Proton binary : $PROTON"
 

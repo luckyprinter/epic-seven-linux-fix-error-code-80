@@ -4,6 +4,21 @@ All notable changes to this project are documented here.
 
 ---
 
+## v1.2.1 — CachyOS Fix & Stdout/Stderr Bug Fix
+
+### Bug Fixes
+- **Fixed (critical):** `info()`, `success()`, and `warn()` were writing to stdout instead of stderr. Because several functions return values via `echo` inside command substitutions (e.g. `INSTALLER="$(find_or_download_installer)"`), their diagnostic messages were being silently captured into variables instead of printed to the terminal. This caused broken paths, empty variables, and confusing errors — particularly visible on CachyOS. All diagnostic output now correctly goes to stderr (`>&2`). Thanks to a CachyOS user for the report and fix.
+
+### New Features
+- **CachyOS / system-wide Proton detection:** Added `/usr/share/steam/compatibilitytools.d` and `/usr/lib/steam/compatibilitytools.d` to `find_proton()`. Distros that package custom Proton builds via their package manager (e.g. `cachy-proton` on CachyOS, `proton-ge-custom` on Nobara) install to these system paths rather than inside the Steam library folder. Also added `~/.steam/root/compatibilitytools.d` as an explicit check.
+- **Improved "Proton not found" error:** Now shows a `find` command users can run to locate their Proton binary, and clearly explains how to use the `--proton` flag.
+
+### Documentation
+- **"Tested on" updated to be honest:** Flatpak and Snap Steam are marked as auto-detected but unverified. CachyOS added as a confirmed distro (with the `--proton` flag note).
+- Added CachyOS and `--proton` tip to the Steam guide.
+
+---
+
 ## v1.2.0 — Cross-Distro Hardening
 
 ### Bug Fixes
