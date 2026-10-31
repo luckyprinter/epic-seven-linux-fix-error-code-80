@@ -80,14 +80,7 @@ Make sure Epic Seven is **not running** before you start. If it's open, close it
 
 ### Step 2 — Open a terminal
 
-A terminal is the text window where you type commands. Here's how to open one on your system:
-
-| System | How to open a terminal |
-|---|---|
-| **Ubuntu / Mint / Fedora** | Press **Ctrl + Alt + T** on your keyboard |
-| **Arch / Manjaro** | Right-click the desktop → look for "Terminal" or "Konsole" in your app menu |
-| **openSUSE** | Press the **Super** key (Windows key) → type *Terminal* → press Enter |
-| **Steam Deck** | Press the power button → tap **Switch to Desktop** → look for **Konsole** in the taskbar |
+A terminal is the text window where you type commands. 
 
 ---
 
